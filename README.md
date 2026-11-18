@@ -39,6 +39,14 @@ Deep Dossier is model-agnostic. Choose your preferred AI provider or run complet
 
 ### 1. Installation
 
+Install directly from PyPI:
+
+```bash
+pip install deep-dossier
+```
+
+Or install from source:
+
 ```bash
 git clone https://github.com/shubhransh-gupta/deep-dossier.git
 cd deep-dossier
