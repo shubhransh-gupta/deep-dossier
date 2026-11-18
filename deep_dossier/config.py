@@ -1,5 +1,5 @@
 """
-Configuration settings and environment management for Open Deep Research.
+Configuration settings and environment management for Deep Dossier.
 """
 
 import os
@@ -9,12 +9,12 @@ from typing import Optional, List
 
 
 def load_env_file(dotenv_path: Optional[str] = None):
-    """Simple robust .env loader without requiring external heavy dependencies."""
+    """Simple robust .env loader."""
     paths_to_check = [
         dotenv_path,
         Path.cwd() / ".env",
         Path.cwd() / ".env.local",
-        Path.home() / ".config" / "open-deep-research" / ".env",
+        Path.home() / ".config" / "deep-dossier" / ".env",
     ]
     for p in paths_to_check:
         if p and Path(p).is_file():
@@ -34,30 +34,24 @@ def load_env_file(dotenv_path: Optional[str] = None):
                 pass
 
 
-# Try loading from any nearby .env
 load_env_file()
 
 
 @dataclass
 class ResearchConfig:
-    """Config options for the Deep Research Agent."""
-    api_key: Optional[str] = field(default_factory=lambda: os.getenv("GEMINI_API_KEY"))
-    model: str = "gemini-2.5-flash"
-    fallback_models: List[str] = field(default_factory=lambda: [
-        "gemini-2.5-flash",
-        "gemini-1.5-flash",
-        "gemini-2.5-pro",
-        "gemini-1.5-pro",
-        "gemini-4-hydrogen"
-    ])
+    """Config options for the Deep Dossier Agent supporting multiple LLM providers."""
+    provider: Optional[str] = None  # 'gemini', 'openai', 'anthropic', 'deepseek', 'nvidia', 'ollama', 'openrouter'
+    model: Optional[str] = None
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
     max_depth: int = 2
     breadth: int = 4
     max_queries_per_step: int = 3
     max_sources_to_scrape: int = 15
-    timeout_seconds: int = 15
+    timeout_seconds: int = 20
     user_agent: str = (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (OpenDeepResearch/0.1.0)"
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (DeepDossier/0.1.0)"
     )
     output_dir: Path = field(default_factory=lambda: Path.cwd() / "research_outputs")
     generate_html: bool = True
@@ -66,11 +60,26 @@ class ResearchConfig:
     verbose: bool = True
 
     def validate(self):
-        """Validates that necessary configuration is present."""
-        if not self.api_key:
+        """Validates that at least one provider key or base_url is accessible."""
+        available_keys = [
+            self.api_key,
+            os.getenv("GEMINI_API_KEY"),
+            os.getenv("OPENAI_API_KEY"),
+            os.getenv("ANTHROPIC_API_KEY"),
+            os.getenv("OPENROUTER_API_KEY"),
+            os.getenv("DEEPSEEK_API_KEY"),
+            os.getenv("NVIDIA_API_KEY"),
+            self.base_url,
+        ]
+        if not any(available_keys):
             raise ValueError(
-                "GEMINI_API_KEY is not set.\n"
-                "Please set it via environment variable: export GEMINI_API_KEY='your-key'\n"
-                "Or pass it with --api-key in the CLI.\n"
-                "Get a free Gemini API key at: https://aistudio.google.com/"
+                "No API Key found.\n"
+                "Please set one of the following environment variables:\n"
+                "  • export GEMINI_API_KEY='...'\n"
+                "  • export OPENAI_API_KEY='...'\n"
+                "  • export ANTHROPIC_API_KEY='...'\n"
+                "  • export OPENROUTER_API_KEY='...'\n"
+                "  • export DEEPSEEK_API_KEY='...'\n"
+                "  • export NVIDIA_API_KEY='...'\n"
+                "Or specify --api-key / --base-url (for local Ollama/vLLM)."
             )

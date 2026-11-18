@@ -12,6 +12,7 @@ from datetime import datetime
 from .config import ResearchConfig
 from .search import SearchEngine, SearchResult
 from .crawler import WebCrawler, ScrapedDocument
+from .llm import UnifiedLLM
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class DeepResearchAgent:
     """
     Autonomous research agent that decomposes questions, searches the web recursively,
     crawls deep documentation/papers, and synthesizes publication-grade reports.
+    Supports Gemini, OpenAI, Claude, DeepSeek, Nemotron, and Ollama.
     """
 
     def __init__(self, config: Optional[ResearchConfig] = None):
@@ -31,74 +33,17 @@ class DeepResearchAgent:
             user_agent=self.config.user_agent,
             timeout=self.config.timeout_seconds,
         )
-
-        # Initialize Gemini Client
-        self._init_gemini_client()
-
-    def _init_gemini_client(self):
-        """Initializes the official google-genai client."""
-        try:
-            from google import genai
-            self.client = genai.Client(api_key=self.config.api_key)
-            self._use_sdk = True
-        except ImportError:
-            logger.warning("google-genai SDK not installed; falling back to direct HTTP API.")
-            self._use_sdk = False
+        self.llm = UnifiedLLM(
+            provider=self.config.provider,
+            model=self.config.model,
+            api_key=self.config.api_key,
+            base_url=self.config.base_url,
+            timeout=self.config.timeout_seconds * 3,
+        )
 
     def _call_llm(self, prompt: str, system_instruction: Optional[str] = None) -> str:
-        """Invokes Gemini with fallback across configured models."""
-        models_to_try = [self.config.model] + [
-            m for m in self.config.fallback_models if m != self.config.model
-        ]
-
-        last_error = None
-        for model_name in models_to_try:
-            try:
-                if self._use_sdk:
-                    from google.genai import types
-                    config_args = {}
-                    if system_instruction:
-                        config_args["system_instruction"] = system_instruction
-                    
-                    response = self.client.models.generate_content(
-                        model=model_name,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(**config_args) if config_args else None
-                    )
-                    if response and response.text:
-                        return response.text
-                else:
-                    return self._call_llm_rest(model_name, prompt, system_instruction)
-            except Exception as e:
-                logger.warning(f"Failed call with model {model_name}: {e}. Retrying with next model...")
-                last_error = e
-
-        raise RuntimeError(f"All Gemini models failed. Last error: {last_error}")
-
-    def _call_llm_rest(self, model: str, prompt: str, system_instruction: Optional[str]) -> str:
-        """Direct REST fallback for environments without google-genai package."""
-        import requests
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.config.api_key}"
-        
-        contents = []
-        if system_instruction:
-            contents.append({"role": "user", "parts": [{"text": f"SYSTEM INSTRUCTION: {system_instruction}"}]})
-        contents.append({"role": "user", "parts": [{"text": prompt}]})
-
-        resp = requests.post(
-            url,
-            json={"contents": contents},
-            headers={"Content-Type": "application/json"},
-            timeout=self.config.timeout_seconds * 2
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        candidates = data.get("candidates", [])
-        if candidates and "content" in candidates[0]:
-            parts = candidates[0]["content"].get("parts", [])
-            if parts and "text" in parts[0]:
-                return parts[0]["text"]
-        raise ValueError(f"Unexpected response structure: {data}")
+        """Invokes the unified multi-provider LLM."""
+        return self.llm.generate(prompt, system_instruction=system_instruction)
 
     def research(self, topic: str, on_progress=None) -> Dict[str, Any]:
         """
