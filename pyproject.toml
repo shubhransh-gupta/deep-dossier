@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deep-dossier"
+version = "0.1.0"
+description = "Autonomous multi-step research agent using Gemini for recursive web discovery, synthesis, and verified intelligence dossiers."
+readme = "README.md"
+authors = [{ name = "Shubhransh Gupta" }]
+license = { text = "MIT" }
+keywords = [
+    "deep-research",
+    "gemini",
+    "ai-agent",
+    "research-agent",
+    "autonomous-agent",
+    "llm",
+    "google-gemini",
+    "dossier",
+    "report-generator",
+    "python",
+    "open-source"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "google-genai>=3.0.0",
+    "rich>=13.0.0",
+    "requests>=2.28.0",
+    "duckduckgo-search>=7.0.0",
+    "beautifulsoup4>=4.12.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+deep-dossier = "deep_dossier.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["deep_dossier*"]

@@ -1,0 +1,112 @@
+"""
+Command-line interface for Open Deep Research with rich terminal styling.
+"""
+
+import sys
+import argparse
+from pathlib import Path
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.markdown import Markdown
+
+from .config import ResearchConfig
+from .agent import DeepResearchAgent
+from .report import save_reports
+
+console = Console()
+
+BANNER = """[bold cyan]
+   ___                  ___               _           
+  / _ \\___ ___ ___     / _ \\___  ___ ___ (_)__ ____   
+ / // / -_) -_) _ \\   / // / _ \\(_-<-_-'/ / -_) __/   
+/____/\\__/\\__/ .__/  /____/\\___/___/___//_/\\__/_/      
+            /_/                                        
+[/bold cyan]
+[dim]⚡ Autonomous Multi-Step Research Agent powered by Google Gemini • 1M+ Token Context[/dim]
+"""
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Deep Dossier — Autonomous multi-step deep research agent powered by Gemini."
+    )
+    parser.add_argument("topic", nargs="?", help="The topic or research question to investigate.")
+    parser.add_argument("--depth", "-d", type=int, default=2, help="Research depth iterations (default: 2)")
+    parser.add_argument("--breadth", "-b", type=int, default=4, help="Breadth per search step (default: 4)")
+    parser.add_argument("--model", "-m", type=str, default="gemini-2.5-flash", help="Gemini model to use")
+    parser.add_argument("--output", "-o", type=str, default="./research_outputs", help="Output directory")
+    parser.add_argument("--api-key", "-k", type=str, default=None, help="Gemini API Key")
+    parser.add_argument("--no-html", action="store_true", help="Disable HTML report generation")
+
+    args = parser.parse_args()
+
+    console.print(BANNER)
+
+    topic = args.topic
+    if not topic:
+        topic = console.input("[bold yellow]Enter your research topic/question: [/bold yellow]").strip()
+
+    if not topic:
+        console.print("[red]Error: Research topic cannot be empty.[/red]")
+        sys.exit(1)
+
+    config = ResearchConfig(
+        api_key=args.api_key,
+        model=args.model,
+        max_depth=args.depth,
+        breadth=args.breadth,
+        output_dir=Path(args.output),
+        generate_html=not args.no_html,
+    )
+
+    try:
+        config.validate()
+    except ValueError as e:
+        console.print(Panel(f"[bold red]Configuration Error:[/bold red]\n{str(e)}", border_style="red"))
+        sys.exit(1)
+
+    agent = DeepResearchAgent(config=config)
+
+    console.print(Panel(
+        f"[bold white]Topic:[/bold white] {topic}\n"
+        f"[bold white]Model:[/bold white] {config.model}\n"
+        f"[bold white]Depth:[/bold white] {config.max_depth} | [bold white]Breadth:[/bold white] {config.breadth}",
+        title="[bold green]Research Mission Activated[/bold green]",
+        border_style="cyan"
+    ))
+
+    with console.status("[bold green]Agent orchestrating deep research...[/bold green]", spinner="dots") as status:
+        def on_progress(msg: str):
+            status.update(f"[bold cyan]{msg}[/bold cyan]")
+            console.print(f"  [dim]•[/dim] {msg}")
+
+        try:
+            result = agent.research(topic=topic, on_progress=on_progress)
+        except Exception as e:
+            console.print(f"\n[bold red]Error during research execution:[/bold red] {e}")
+            sys.exit(1)
+
+    # Save reports
+    paths = save_reports(result, config.output_dir, result["slug"])
+
+    # Output Summary Table
+    table = Table(title="Generated Research Deliverables", border_style="green")
+    table.add_column("Format", style="cyan", no_wrap=True)
+    table.add_column("Location", style="white")
+
+    if "markdown" in paths:
+        table.add_row("Markdown (.md)", str(paths["markdown"].resolve()))
+    if "html" in paths:
+        table.add_row("Interactive HTML", str(paths["html"].resolve()))
+    if "json" in paths:
+        table.add_row("JSON Dossier", str(paths["json"].resolve()))
+
+    console.print("\n")
+    console.print(table)
+    console.print(f"\n[bold green]✨ Research Complete![/bold green] Analyzed [bold]{result['document_count']}[/bold] sources ({result['total_chars_analyzed']:,} characters).")
+    console.print(f"To view HTML report in browser: [bold cyan]open {paths.get('html')}[/bold cyan]\n")
+
+
+if __name__ == "__main__":
+    main()
