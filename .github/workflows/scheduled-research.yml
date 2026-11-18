@@ -1,0 +1,30 @@
+name: Automated Deep Research
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Topic to research'
+        required: true
+        default: 'Latest developments in AI reasoning models'
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Deep Dossier
+        uses: shubhransh-gupta/deep-dossier@v1
+        with:
+          topic: ${{ inputs.topic }}
+          api-key: ${{ secrets.GEMINI_API_KEY }}
+          provider: 'gemini'
+          depth: '2'
+
+      - name: Upload Research Dossier Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-dossier
+          path: ./research_outputs/

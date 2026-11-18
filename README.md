@@ -45,6 +45,20 @@ cd deep-dossier
 pip install -e .
 ```
 
+### ⚡ Use as a GitHub Action in Your CI/CD
+
+Run automated deep research on schedules or trigger it via GitHub workflows:
+
+```yaml
+- name: Run Deep Dossier
+  uses: shubhransh-gupta/deep-dossier@v1
+  with:
+    topic: 'Competitor analysis and market landscape'
+    api-key: ${{ secrets.GEMINI_API_KEY }}
+    provider: 'gemini'
+    depth: '2'
+```
+
 ### 2. Set Your Preferred API Key
 
 Choose any provider:

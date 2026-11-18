@@ -1,0 +1,84 @@
+name: 'Deep Dossier - Autonomous Research Agent'
+description: 'Autonomous multi-step research agent that crawls web sources and generates verified intelligence dossiers with citations.'
+author: 'Shubhransh Gupta'
+branding:
+  icon: 'book-open'
+  color: 'blue'
+
+inputs:
+  topic:
+    description: 'The research topic or investigative question'
+    required: true
+  api-key:
+    description: 'API key for the selected AI provider (Gemini, Claude, OpenAI, DeepSeek, etc.)'
+    required: true
+  provider:
+    description: 'AI provider: gemini, anthropic, openai, deepseek, or ollama'
+    required: false
+    default: 'gemini'
+  model:
+    description: 'Model identifier (e.g. gemini-2.5-flash, claude-3-5-sonnet, gpt-4o)'
+    required: false
+    default: ''
+  depth:
+    description: 'Recursive search depth'
+    required: false
+    default: '2'
+  breadth:
+    description: 'Search breadth per iteration'
+    required: false
+    default: '4'
+  output-dir:
+    description: 'Directory where dossiers will be generated'
+    required: false
+    default: './research_outputs'
+
+outputs:
+  markdown-path:
+    description: 'Path to generated Markdown report'
+    value: ${{ steps.run-deep-dossier.outputs.markdown_path }}
+  html-path:
+    description: 'Path to generated interactive HTML report'
+    value: ${{ steps.run-deep-dossier.outputs.html_path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Deep Dossier
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install git+https://github.com/shubhransh-gupta/deep-dossier.git
+
+    - name: Execute Deep Research Mission
+      id: run-deep-dossier
+      shell: bash
+      env:
+        GEMINI_API_KEY: ${{ inputs.api-key }}
+        ANTHROPIC_API_KEY: ${{ inputs.api-key }}
+        OPENAI_API_KEY: ${{ inputs.api-key }}
+        DEEPSEEK_API_KEY: ${{ inputs.api-key }}
+      run: |
+        ARGS="\"${{ inputs.topic }}\""
+        if [ -n "${{ inputs.provider }}" ]; then
+          ARGS="$ARGS --provider ${{ inputs.provider }}"
+        fi
+        if [ -n "${{ inputs.model }}" ]; then
+          ARGS="$ARGS --model ${{ inputs.model }}"
+        fi
+        if [ -n "${{ inputs.depth }}" ]; then
+          ARGS="$ARGS --depth ${{ inputs.depth }}"
+        fi
+        if [ -n "${{ inputs.breadth }}" ]; then
+          ARGS="$ARGS --breadth ${{ inputs.breadth }}"
+        fi
+        if [ -n "${{ inputs.output-dir }}" ]; then
+          ARGS="$ARGS --output \"${{ inputs.output-dir }}\""
+        fi
+        
+        eval deep-dossier $ARGS
