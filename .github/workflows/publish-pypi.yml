@@ -7,10 +7,10 @@ on:
 
 jobs:
   pypi-publish:
-    name: Build and publish Python 🐍 distribution 📦 to PyPI
+    name: Build and publish Python distribution to PyPI
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # Required for trusted publishing
+      id-token: write
       contents: read
 
     steps:
@@ -31,7 +31,8 @@ jobs:
       - name: Verify package
         run: twine check dist/*
 
-      - name: Publish distribution 📦 to PyPI
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
