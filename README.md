@@ -6,6 +6,10 @@
 
 > **📖 Live Documentation & Interactive FAQs:** [https://agent-docs-coral.vercel.app](https://agent-docs-coral.vercel.app)
 
+<p align="center">
+  <img src="assets/demo.svg" alt="Deep Dossier Live Terminal Demo" width="100%" />
+</p>
+
 An open-source autonomous multi-step research agent with **universal model support**.
 
 Deep Dossier decomposes complex research prompts into targeted search plans, recursively crawls dozens of web pages and documents in parallel, resolves information gaps, and produces publication-grade Markdown and interactive HTML dossiers with verified in-text citations.
