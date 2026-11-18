@@ -1,5 +1,11 @@
 # ⚡ Deep Dossier
 
+[![Documentation](https://img.shields.io/badge/Documentation-Apple%20HIG%20Style-blue?style=for-the-badge&logo=vercel)](https://agent-docs-coral.vercel.app)
+[![GitHub Stars](https://img.shields.io/github/stars/shubhransh-gupta/deep-dossier?style=for-the-badge&color=2997ff)](https://github.com/shubhransh-gupta/deep-dossier/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+> **📖 Live Documentation & Interactive FAQs:** [https://agent-docs-coral.vercel.app](https://agent-docs-coral.vercel.app)
+
 An open-source autonomous multi-step research agent with **universal model support**.
 
 Deep Dossier decomposes complex research prompts into targeted search plans, recursively crawls dozens of web pages and documents in parallel, resolves information gaps, and produces publication-grade Markdown and interactive HTML dossiers with verified in-text citations.
