@@ -53,19 +53,72 @@ cd deep-dossier
 pip install -e .
 ```
 
-### ⚡ Use as a GitHub Action in Your CI/CD
+## ⚡ How to Use in Any Other Project (GitHub Action CI/CD)
 
-Run automated deep research on schedules or trigger it via GitHub workflows:
+You can drop **Deep Dossier** directly into **any GitHub repository** to automate recurring market research, competitive analysis, or technical investigations.
+
+Available on the **GitHub Marketplace**: [`shubhransh-gupta/deep-dossier@v1`](https://github.com/shubhransh-gupta/deep-dossier)
+
+### 1. Configure Your AI Provider Secret
+In your target repository:
+1. Navigate to **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+2. Name the secret `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`) and paste your API key.
+
+### 2. Create the Workflow File
+Add a new workflow file at `.github/workflows/deep-research.yml`:
 
 ```yaml
-- name: Run Deep Dossier
-  uses: shubhransh-gupta/deep-dossier@v1
-  with:
-    topic: 'Competitor analysis and market landscape'
-    api-key: ${{ secrets.GEMINI_API_KEY }}
-    provider: 'gemini'
-    depth: '2'
+name: Automated Deep Research
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Topic or investigative question to research'
+        required: true
+        default: 'Latest developments in frontier AI reasoning architectures'
+      depth:
+        description: 'Recursive search depth (1-3)'
+        required: false
+        default: '2'
+  schedule:
+    # Optional: Run automatically every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Deep Dossier
+        uses: shubhransh-gupta/deep-dossier@v1
+        with:
+          topic: ${{ inputs.topic || 'Weekly frontier AI industry research' }}
+          api-key: ${{ secrets.GEMINI_API_KEY }}
+          provider: 'gemini'
+          depth: ${{ inputs.depth || '2' }}
+          output-dir: './research_outputs'
+
+      - name: Upload Research Dossier Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-dossier
+          path: ./research_outputs/
 ```
+
+### Action Inputs Reference
+
+| Input | Required | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `topic` | **Yes** | &mdash; | Research topic or query to investigate |
+| `api-key` | **Yes** | &mdash; | AI provider API key (pass via `${{ secrets.GEMINI_API_KEY }}`) |
+| `provider` | No | `gemini` | `gemini`, `anthropic`, `openai`, `deepseek` |
+| `model` | No | Auto | Specific model override (e.g. `gemini-3-flash-preview`, `claude-3-5-sonnet`) |
+| `depth` | No | `2` | Recursive crawl iterations (1 to 3) |
+| `breadth` | No | `4` | Number of web sources crawled per iteration |
+| `output-dir`| No | `./research_outputs` | Destination directory for `.md` and `.html` dossiers |
 
 ### 2. Set Your Preferred API Key
 
